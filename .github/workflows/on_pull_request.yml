@@ -1,0 +1,19 @@
+name: Pull Request Validation
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+jobs:
+  check-files:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Python script
+        run: lambda_function.py
