@@ -1,3 +1,4 @@
+# EC2 Instance Shutdown Lambda Function
 import boto3
 
 ec2 = boto3.client('ec2')
