@@ -1,3 +1,4 @@
+# Python script to stop all running EC2 instances
 import boto3
 import logging
 
