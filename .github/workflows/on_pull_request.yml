@@ -1,4 +1,5 @@
-name: Pull Request Validation
+name: Deploy to Beta on Pull Request
+
 on:
   pull_request:
     branches:
@@ -7,13 +8,44 @@ on:
       - opened
       - synchronize
       - reopened
+
 jobs:
-  check-files:
+  deploy-beta:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Run Python script
-        run: lambda_function.py
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Zip Lambda function
+        run: |
+          zip function.zip lambda_function.py
+          ls -lh function.zip
+      
+      - name: Upload Lambda code to S3 (Beta)
+        run: |
+          aws s3 cp function.zip s3://${{ secrets.S3_BUCKET_BETA }}/${{ secrets.S3_PATH_BETA }}
+          echo "Lambda code uploaded to s3://${{ secrets.S3_BUCKET_BETA }}/${{ secrets.S3_PATH_BETA }}"
+      
+      - name: Deploy CloudFormation stack (Beta)
+        run: |
+          aws cloudformation deploy \
+            --stack-name ${{ secrets.CF_STACK_NAME_BETA }} \
+            --template-file infrastructure/cloudformation/lambda-ec2-shutdown.yml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              LambdaFunctionName=${{ secrets.LAMBDA_NAME_BETA }} \
+              LambdaCodeBucket=${{ secrets.S3_BUCKET_BETA }} \
+              LambdaCodeKey=${{ secrets.S3_PATH_BETA }}
+      
+      - name: Get Lambda function info
+        run: |
+          echo "Beta deployment completed!"
+          aws lambda get-function --function-name ${{ secrets.LAMBDA_NAME_BETA }} --query 'Configuration.[FunctionName,Runtime,LastModified]' --output table
