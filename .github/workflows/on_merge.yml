@@ -23,12 +23,10 @@ jobs:
       - name: Zip Lambda function
         run: |
           zip function.zip lambda_function.py
-          ls -lh function.zip
       
       - name: Upload Lambda code to S3 (Production)
         run: |
           aws s3 cp function.zip s3://${{ secrets.S3_BUCKET_PROD }}/${{ secrets.S3_PATH_PROD }}
-          echo "Lambda code uploaded to s3://${{ secrets.S3_BUCKET_PROD }}/${{ secrets.S3_PATH_PROD }}"
       
       - name: Deploy CloudFormation stack (Production)
         run: |
@@ -40,16 +38,3 @@ jobs:
               LambdaFunctionName=${{ secrets.LAMBDA_NAME_PROD }} \
               LambdaCodeBucket=${{ secrets.S3_BUCKET_PROD }} \
               LambdaCodeKey=${{ secrets.S3_PATH_PROD }}
-      
-      - name: Get Lambda function info
-        run: |
-          echo "Production deployment completed!"
-          aws lambda get-function --function-name ${{ secrets.LAMBDA_NAME_PROD }} --query 'Configuration.[FunctionName,Runtime,LastModified]' --output table
-      
-      - name: Create deployment summary
-        run: |
-          echo "## 🚀 Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Lambda Function:** ${{ secrets.LAMBDA_NAME_PROD }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Stack Name:** ${{ secrets.CF_STACK_NAME_PROD }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Region:** ${{ secrets.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY

@@ -27,12 +27,10 @@ jobs:
       - name: Zip Lambda function
         run: |
           zip function.zip lambda_function.py
-          ls -lh function.zip
       
       - name: Upload Lambda code to S3 (Beta)
         run: |
           aws s3 cp function.zip s3://${{ secrets.S3_BUCKET_BETA }}/${{ secrets.S3_PATH_BETA }}
-          echo "Lambda code uploaded to s3://${{ secrets.S3_BUCKET_BETA }}/${{ secrets.S3_PATH_BETA }}"
       
       - name: Deploy CloudFormation stack (Beta)
         run: |
@@ -44,8 +42,3 @@ jobs:
               LambdaFunctionName=${{ secrets.LAMBDA_NAME_BETA }} \
               LambdaCodeBucket=${{ secrets.S3_BUCKET_BETA }} \
               LambdaCodeKey=${{ secrets.S3_PATH_BETA }}
-      
-      - name: Get Lambda function info
-        run: |
-          echo "Beta deployment completed!"
-          aws lambda get-function --function-name ${{ secrets.LAMBDA_NAME_BETA }} --query 'Configuration.[FunctionName,Runtime,LastModified]' --output table
